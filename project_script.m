@@ -151,10 +151,10 @@ if eval_flag == 1
     indices=cvpartition(labels_mid,'holdout',0.5);
     training_indices = training(indices);
     validation_indices = ~training_indices;
-    features_training = X_known(training_indices,:);
-    labels_training = Y(training_indices,:); 
-    features_validation = X_known(validation_indices,:);
-    labels_validation =Y(validation_indices,:);
+    features_training = features_mid(training_indices,:);
+    labels_training = labels_mid(training_indices,:); 
+    features_validation = features_mid(validation_indices,:);
+    labels_validation =labels_mid(validation_indices,:);
     
     % Task 4 - Create model on training set
     linear_model = fitlm(features_training,labels_training);      % Simple linear regression
