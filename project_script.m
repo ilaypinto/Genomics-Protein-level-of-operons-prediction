@@ -5,22 +5,15 @@ clear all; clc; close all;
 
 %% Flags
 % add flags as you please for efficiant work
-
-load_flag = 1;          % Load Data and define usefull parameters flag
-
-feat_creation_flag = 1; % Features Creation flag
-
+load_flag = 1;           % Load Data and define usefull parameters flag
+feat_creation_flag = 1;  % Features Creation flag
 convert_flag = 1;        % Convert to bin based features flag
-
 feat_selection_flag = 1; % Feature selection flag
-
 eval_flag = 1;           % Prediction and analysis on Validation set flag
-
 test_flag = 1;           % Prediction and analysis on Test set flag
-
 finito_flag = 1;         % Prediction on Unknown Data flag
 
-%% Load Data and define usefull parameters
+%% Load Data and define usefull parameters ##### loading data should be inside the creat features function #####
 if load_flag ==1
     % Load Data
     all_data  = readtable('Variants_sequence.xlsx');   % Load all sequences
@@ -107,18 +100,8 @@ if feat_creation_flag == 1
 end
 %% Convert to bin based features
 if convert_flag == 1
-    % covert index based features to bin based features
-    
-    % append given features
-    X = cat(features,given_features);
-    
-    % separate between known(training) and unknown(test) data sets
-    X_known = [];
-    
-    X_unknown = [];
-    
-    % append labels of known data set
-     Y = [];
+    [known_bin_idx_sorted, known_bin_features, known_labels, unknown_bin_idx_sorted,...
+          unknown_bin_features] =  bin_feat(features_mat);
 end
 
 %% Correlation
