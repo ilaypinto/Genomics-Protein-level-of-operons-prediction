@@ -119,7 +119,7 @@ heatmap(abs(corr(X_knwon,Y,type = 'Spearman')))
 if feat_selection_flag == 1
     % Before removing features- consider feature-feature and feature label
     % correlation.
-    corr_remove = [31];    % features indices to remove due to coorelation analysis
+    corr_remove = [31,32,33,34];    % features indices to remove due to coorelation analysis
     X_knwon(:,corr_remove) = [];
     X_unknwon(:,corr_remove) = [];
     
