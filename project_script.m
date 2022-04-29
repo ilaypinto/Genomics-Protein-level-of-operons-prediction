@@ -5,7 +5,6 @@ clear all; clc; close all;
 
 %% Flags
 % add flags as you please for efficiant work
-load_flag = 1;           % Load Data and define usefull parameters flag
 feat_creation_flag = 1;  % Features Creation flag
 convert_flag = 1;        % Convert to bin based features flag
 feat_selection_flag = 1; % Feature selection flag
@@ -13,21 +12,20 @@ eval_flag = 1;           % Prediction and analysis on Validation set flag
 test_flag = 1;           % Prediction and analysis on Test set flag
 finito_flag = 1;         % Prediction on Unknown Data flag
 
-%% Load Data and define usefull parameters ##### loading data should be inside the creat features function #####
-if load_flag ==1
+
+% Useful Parameters
+    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
+        "TG","TC","TA"];  % Maybe use this?
+
+%% Features Creation
+if feat_creation_flag == 1
     % Load Data
     all_data  = readtable('Variants_sequence.xlsx');   % Load all sequences
     known_data = readtable("known_data_set.xlsx");     % Load known data
     unknown_data = readtable("unknown_data_set.xlsx"); % Load unknown data
     
-    % Useful Parameters
     features = zeros(size(all_data,1),50);
-    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
-        "TG","TC","TA"];  % Maybe use this?
-end
 
-%% Features Creation
-if feat_creation_flag == 1
     for i = 1:size(all_data,1)
     
         % Relevant data
@@ -94,33 +92,53 @@ if feat_creation_flag == 1
     %     features(i,36) = FE window 2
     %     features(i,37) = FE window 3
     
+   
     end
-
-
+    save('features.mat','features');   % Save created features
+else
+    load('features.mat');              % Load created features
 end
 %% Convert to bin based features
 if convert_flag == 1
-    [known_bin_idx_sorted, known_bin_features, known_labels, unknown_bin_idx_sorted,...
-          unknown_bin_features] =  bin_feat(features_mat);
+    [known_bin_idx_sorted, X_known, Y, unknown_bin_idx_sorted,...  % Converting created features
+    X_unknown] =  bin_feat(features);                              % into bin based features
+    
+    save('bin_convertion.mat','X_known','Y',...
+    'X_unknown','known_bin_idx_sorted','unknown_bin_idx_sorted');  % Save created parameters
+
+else
+    load('bin_convertion.mat'); % Load created parameters
 end
 
 %% Correlation
 
-heatmap(abs(corr(features(:,1:34),type = 'Spearman')))
-% heatmap(abs(corr(features(:,1:31),labels,type = 'Spearman')))
+heatmap(abs(corr(X_known,type = 'Spearman')))
+heatmap(abs(corr(X_knwon,Y,type = 'Spearman')))
 
 %% Feature selection
 if feat_selection_flag == 1
     % Before removing features- consider feature-feature and feature label
     % correlation.
-    
-    % remove = features indices to remove due to coorelation analysis
-    % features(:,remove) = [];
+    corr_remove = [31];    % features indices to remove due to coorelation analysis
+    X_knwon(:,corr_remove) = [];
+    X_unknwon(:,corr_remove) = [];
     
     % remove more features via SFS or filter methods.
+    options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
+    fun = @(Xtrain,Ytrain,Xtest,Ytest)loss(fitlm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
+    [idx_sfs, history_sfs] = sequentialfs(fun, X_unknown, Y, 'options', options); 
+    
+    sfs_remove = ~idx_sfs;
+    X_knwon(:,sfs_remove) = [];
+    X_unknwon(:,sfs_remove) = [];
+    
+    save('feat_selection.mat','corr_remove','sfs_remove','X_known','X_unknown');
+else
+    load('feat_selection.mat');
 end
 %% Prediction and analysis on Validation set
 if eval_flag == 1
+
     % Create test and training/validation sets
     indices=cvpartition(Y,'holdout',0.2);
     training_indices = training(indices);
