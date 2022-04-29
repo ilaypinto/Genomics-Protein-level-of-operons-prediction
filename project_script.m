@@ -120,8 +120,8 @@ if feat_selection_flag == 1
     % Before removing features- consider feature-feature and feature label
     % correlation.
     corr_remove = [31,32,33,34];    % features indices to remove due to coorelation analysis
-    X_knwon(:,corr_remove) = [];
-    X_unknwon(:,corr_remove) = [];
+    X_known(:,corr_remove) = [];
+    X_unknown(:,corr_remove) = [];
     
     % remove more features via SFS or filter methods.
     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
@@ -129,8 +129,10 @@ if feat_selection_flag == 1
     [idx_sfs, history_sfs] = sequentialfs(fun, X_known, Y, 'options', options); 
     
     sfs_remove = ~idx_sfs;
-    X_knwon(:,sfs_remove) = [];
-    X_unknwon(:,sfs_remove) = [];
+    X_known(:,sfs_remove) = [];
+    X_unknown(:,sfs_remove) = [];
+    
+    gplotmatrix(MW_new_train_feat(:,X_knwon, [], Y);  % gplot - look at the features!
     
     save('feat_selection.mat','corr_remove','sfs_remove','X_known','X_unknown');
 else
