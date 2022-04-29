@@ -126,7 +126,7 @@ if feat_selection_flag == 1
     % remove more features via SFS or filter methods.
     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
     fun = @(Xtrain,Ytrain,Xtest,Ytest)loss(fitlm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
-    [idx_sfs, history_sfs] = sequentialfs(fun, X_unknown, Y, 'options', options); 
+    [idx_sfs, history_sfs] = sequentialfs(fun, X_known, Y, 'options', options); 
     
     sfs_remove = ~idx_sfs;
     X_knwon(:,sfs_remove) = [];
