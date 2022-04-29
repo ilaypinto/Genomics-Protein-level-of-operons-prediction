@@ -112,7 +112,10 @@ end
 
 %% Correlation
 
+figure;
 heatmap(abs(corr(X_known,type = 'Spearman')))
+
+figure;
 heatmap(abs(corr(X_knwon,Y,type = 'Spearman')))
 
 %% Feature selection
@@ -132,7 +135,8 @@ if feat_selection_flag == 1
     X_known(:,sfs_remove) = [];
     X_unknown(:,sfs_remove) = [];
     
-    gplotmatrix(MW_new_train_feat(:,X_knwon, [], Y);  % gplot - look at the features!
+    figure;
+    gplotmatrix(X_knwon, [], Y);  % gplot - look at the features!
     
     save('feat_selection.mat','corr_remove','sfs_remove','X_known','X_unknown');
 else
