@@ -20,7 +20,7 @@ unknown_seq_idx = unknown(:,2:27).Variables;
 known_labels = known(:,28).Variables;
 
 % initialize an empty matrix for the bin features
-bin_features = zeros(max([known_bin_idx;unknown_bin_idx]), size(features_mat, 2));
+bin_features = zeros(max([known_bin_idx;unknown_bin_idx]), size(features_mat, 2)+10);
 
 % compute the bin features and allocate it into its correct idx in the bin
 % features matrix
@@ -28,18 +28,20 @@ bin_features = zeros(max([known_bin_idx;unknown_bin_idx]), size(features_mat, 2)
 for i = 1:size(known_bin_idx)
     idx = known_bin_idx(i);                      % bin index
     seq_indices = known_seq_idx(i,:);            % sequences indices in the bin
+    seq_indices(isnan(seq_indices)) = [];
     curr_features = features_mat(seq_indices,:); % features of that sequences
     curr_bin_Feat = mean(curr_features);         % mean of each column (feature)
-    bin_features(idx,:) = curr_bin_Feat;         % allocate the features into the features matrix
+    bin_features(idx,:) = [curr_bin_Feat,table2array(known(i,29:38))];% allocate the features into the features matrix
 end
 
 % repeat the same loop only with the unknown bins
 for i = 1:size(unknown_bin_idx)
     idx = unknown_bin_idx(i);                      % bin index
     seq_indices = unknown_seq_idx(i,:);            % sequences indices in the bin
+    seq_indices(isnan(seq_indices)) = [];
     curr_features = features_mat(seq_indices,:); % features of that sequences
     curr_bin_Feat = mean(curr_features);         % mean of each column (feature)
-    bin_features(idx,:) = curr_bin_Feat;         % allocate the features into the features matrix
+    bin_features(idx,:) = [curr_bin_Feat,table2array(unknown(i,28:37))];% allocate the features into the features matrix
 end
 
 % sort the bin indices to keep alignment between bins nambers and indices
@@ -47,9 +49,10 @@ end
 [known_bin_idx_sorted, I] = sort(known_bin_idx);
 unknown_bin_idx_sorted = sort(unknown_bin_idx);
 
+
 % extract each set features (known\unknown)
-known_bin_features = bin_features(known_bin_idx_sorted);
-unknown_bin_features = bin_features(unknown_bin_idx_sorted);
+known_bin_features = bin_features(known_bin_idx_sorted,:);
+unknown_bin_features = bin_features(unknown_bin_idx_sorted,:);
 
 known_labels = known_labels(I); % rearange the labels of known to match the feature matrix
 
