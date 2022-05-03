@@ -7,10 +7,10 @@ clear all; clc; close all;
 % add flags as you please for efficiant work
 feat_creation_flag = 1;  % Features Creation flag
 convert_flag = 1;        % Convert to bin based features flag
-feat_selection_flag = 1; % Feature selection flag
-eval_flag = 1;           % Prediction and analysis on Validation set flag
-test_flag = 1;           % Prediction and analysis on Test set flag
-finito_flag = 1;         % Prediction on Unknown Data flag
+feat_selection_flag = 0; % Feature selection flag
+eval_flag = 0;           % Prediction and analysis on Validation set flag
+test_flag = 0;           % Prediction and analysis on Test set flag
+finito_flag = 0;         % Prediction on Unknown Data flag
 
 
 % Useful Parameters
@@ -24,7 +24,7 @@ if feat_creation_flag == 1
     known_data = readtable("known_data_set.xlsx");     % Load known data
     unknown_data = readtable("unknown_data_set.xlsx"); % Load unknown data
     
-    features = zeros(size(all_data,1),50);
+    features = zeros(size(all_data,1),34);
 
     for i = 1:size(all_data,1)
     
@@ -73,14 +73,11 @@ if feat_creation_flag == 1
         else
             features(i,26) = 0;       % Number of palindromes in sequence
             features(i,27) = 0;       % Longest palindrome in sequence
-            % features 26-27 are highly corroloated, consider removing one.
         end
         features(i,28) = length(strfind(NT,'TATA')); % TATA is in Eukaryotes so maybe no...
         features(i,29) = length(strfind(NT,'CAT'));  % Saw in wikipedia, idk...
         features(i,30) = length(strfind(NT,'A'))+length(strfind(NT,'G')); % No. of Purines
         features(i,31) = length(strfind(NT,'C'))+length(strfind(NT,'T')); % No. of Pyrimidines
-            % features 30-31 are highly corroloated, consider removing one.
-    
     
         % Task 1 - AAA,TTT, GCA
         features(i,32) = length(strfind(NT,'AAA'));
@@ -103,6 +100,8 @@ if convert_flag == 1
     [known_bin_idx_sorted, X_known, Y, unknown_bin_idx_sorted,...  % Converting created features
     X_unknown] =  bin_feat(features);                              % into bin based features
     
+    
+
     save('bin_convertion.mat','X_known','Y',...
     'X_unknown','known_bin_idx_sorted','unknown_bin_idx_sorted');  % Save created parameters
 
@@ -112,17 +111,18 @@ end
 
 %% Correlation
 
+
 figure;
 heatmap(abs(corr(X_known,type = 'Spearman')))
 
 figure;
-heatmap(abs(corr(X_knwon,Y,type = 'Spearman')))
+heatmap(abs(corr(X_known,Y,type = 'Spearman')))
 
 %% Feature selection
 if feat_selection_flag == 1
     % Before removing features- consider feature-feature and feature label
     % correlation.
-    corr_remove = [31,32,33,34];    % features indices to remove due to coorelation analysis
+    corr_remove = [26,31,32,33,34,35]; % features indices to remove due to coorelation analysis
     X_known(:,corr_remove) = [];
     X_unknown(:,corr_remove) = [];
     
