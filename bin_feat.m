@@ -2,8 +2,8 @@ function [known_bin_idx_sorted, known_bin_features, known_labels, unknown_bin_id
           unknown_bin_features] =  bin_feat(features_mat)
 
 % define the paths for the xlsx files and load the data from them
-known_path = 'C:\Users\tomer\Desktop\גנומיקה חישובית ומערכתית\אתגר\known_data_set.xlsx';
-unknown_path = 'C:\Users\tomer\Desktop\גנומיקה חישובית ומערכתית\אתגר\unknown_data_set.xlsx';
+known_path = 'known_data_set.xlsx';
+unknown_path = 'unknown_data_set.xlsx';
 
 known = readtable(known_path, "VariableNamingRule", "preserve");
 unknown = readtable(unknown_path, "VariableNamingRule", "preserve");
