@@ -7,9 +7,9 @@ clear all; clc; close all;
 % add flags as you please for efficiant work
 feat_creation_flag = 1;  % Features Creation flag
 convert_flag = 1;        % Convert to bin based features flag
-feat_selection_flag = 0; % Feature selection flag
-eval_flag = 0;           % Prediction and analysis on Validation set flag
-test_flag = 0;           % Prediction and analysis on Test set flag
+feat_selection_flag = 1; % Feature selection flag
+eval_flag = 1;           % Prediction and analysis on Validation set flag
+test_flag = 1;           % Prediction and analysis on Test set flag
 finito_flag = 0;         % Prediction on Unknown Data flag
 
 
@@ -122,23 +122,23 @@ heatmap(abs(corr(X_known,Y,type = 'Spearman')))
 if feat_selection_flag == 1
     % Before removing features- consider feature-feature and feature label
     % correlation.
-    corr_remove = [26,31,32,33,34,35]; % features indices to remove due to coorelation analysis
+    corr_remove = [1:27]; % features indices to remove due to coorelation analysis
     X_known(:,corr_remove) = [];
     X_unknown(:,corr_remove) = [];
     
-    % remove more features via SFS or filter methods.
-    options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
-    fun = @(Xtrain,Ytrain,Xtest,Ytest)loss(fitlm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
-    [idx_sfs, history_sfs] = sequentialfs(fun, X_known, Y, 'options', options); 
+%     % remove more features via SFS or filter methods.
+%     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
+%     fun = @(Xtrain,Ytrain,Xtest,Ytest)loss(fitrensemble(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
+%     [idx_sfs, history_sfs] = sequentialfs(fun, X_known, Y, 'options', options); 
+%     
+%     sfs_remove = ~idx_sfs;
+%     X_known(:,sfs_remove) = [];
+%     X_unknown(:,sfs_remove) = [];
+%     
+%     figure;
+%     gplotmatrix(X_knwon, [], Y);  % gplot - look at the features!
     
-    sfs_remove = ~idx_sfs;
-    X_known(:,sfs_remove) = [];
-    X_unknown(:,sfs_remove) = [];
-    
-    figure;
-    gplotmatrix(X_knwon, [], Y);  % gplot - look at the features!
-    
-    save('feat_selection.mat','corr_remove','sfs_remove','X_known','X_unknown');
+    save('feat_selection.mat','corr_remove','X_known','X_unknown'); % add 'sfs_remove' is sfsing
 else
     load('feat_selection.mat');
 end
@@ -155,7 +155,7 @@ if eval_flag == 1
     labels_test =Y(test_indices,:); 
     
     % Creat training and validation sets
-    indices=cvpartition(labels_mid,'holdout',0.5);
+    indices=cvpartition(labels_mid,'holdout',0.3);
     training_indices = training(indices);
     validation_indices = ~training_indices;
     features_training = features_mid(training_indices,:);
@@ -181,13 +181,25 @@ if eval_flag == 1
     
     % Task 5 - Correlation of training vs validation;
     
-    Validation_corr = [abs(corr(labels_validation,linear_predict_train,type = 'Spearman')),...
-        abs(corr(labels_validation,neural_predict_train,type = 'Spearman')),...
-        abs(corr(labels_validation,tree_predict_train,type = 'Spearman'))];
+    Validation_corr = [abs(corr(labels_validation,linear_predict_val,type = 'Spearman')),...
+        abs(corr(labels_validation,neural_predict_val,type = 'Spearman')),...
+        abs(corr(labels_validation,tree_predict_val,type = 'Spearman'))];
     
     Training_corr = [abs(corr(labels_training,linear_predict_train,type = 'Spearman')),...
         abs(corr(labels_training,neural_predict_train,type = 'Spearman')),...
         abs(corr(labels_training,tree_predict_train,type = 'Spearman'))];
+
+figure;
+subplot(2,1,1);
+plot(1:224,labels_training);
+hold on;
+plot(1:224,tree_predict_train);
+hold off
+subplot(2,1,2);
+plot(1:95,labels_validation);
+hold on;
+plot(1:95,tree_predict_val);
+hold off
 end
 %% Prediction and analysis on Test set
 if test_flag == 1
@@ -196,6 +208,12 @@ if test_flag == 1
     
     % Task 5 - Predict on test set
     predict_test = predict(Best_model, features_test);
+
+figure;
+plot(1:79,labels_test);
+hold on;
+plot(1:79,predict_test);
+hold off
 end
 %% Prediction on Unknown Data
 if finito_flag == 1
