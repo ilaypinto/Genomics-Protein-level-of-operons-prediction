@@ -41,7 +41,7 @@ for i = 1:size(unknown_bin_idx)
     seq_indices(isnan(seq_indices)) = [];
     curr_features = features_mat(seq_indices,:); % features of that sequences
     curr_bin_Feat = mean(curr_features);         % mean of each column (feature)
-    bin_features(idx,:) = [curr_bin_Feat,table2array(unknown(i,28:37))];% allocate the features into the features matrix
+    bin_features(idx,:) = [curr_bin_Feat,table2array(unknown(i,28:37))];         % allocate the features into the features matrix
 end
 
 % sort the bin indices to keep alignment between bins nambers and indices
@@ -57,5 +57,4 @@ unknown_bin_features = bin_features(unknown_bin_idx_sorted,:);
 known_labels = known_labels(I); % rearange the labels of known to match the feature matrix
 
 end
-
 
