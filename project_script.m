@@ -1,226 +1,125 @@
 %% Main Script - Challenge %%
-
-% This is the main script for the project 
 clear all; clc; close all;
 
 %% Flags
 % add flags as you please for efficiant work
-feat_creation_flag = 1;  % Features Creation flag
-convert_flag = 1;        % Convert to bin based features flag
-feat_selection_flag = 1; % Feature selection flag
-eval_flag = 1;           % Prediction and analysis on Validation set flag
-test_flag = 1;           % Prediction and analysis on Test set flag
-finito_flag = 0;         % Prediction on Unknown Data flag
-
+create_bins = 1;         % 1 - Convert to bin based features, 0 - dont convert into bin based features
+feat_selection = 0;      % 1 - apply feature selection process, 0 - dont aplly feature selection
+val_flag = 1;            % 1 - Prediction and analysis on Validation set flag
+test_flag = 1;           % 1 - Prediction and analysis on Test set flag
+finito_flag = 1;         % 1 - Prediction on Unknown Data flag
+use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
 
 % Useful Parameters
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
         "TG","TC","TA"];  % Maybe use this?
 
+% Load Data
+all_data  = readtable('Variants_sequence.xlsx', 'VariableNamingRule', 'preserve');   % Load all sequences
+
 %% Features Creation
-if feat_creation_flag == 1
-    % Load Data
-    all_data  = readtable('Variants_sequence.xlsx');   % Load all sequences
-    known_data = readtable("known_data_set.xlsx");     % Load known data
-    unknown_data = readtable("unknown_data_set.xlsx"); % Load unknown data
-    
-    features = zeros(size(all_data,1),34);
+features = extract_feat(all_data);
 
-    for i = 1:size(all_data,1)
+
+%% Convert to bin based features (mean of features from sequences in the bin)
+if use_all_feat
+    [X_known_our, targets_1, X_unknown_our] =  bin_feat(features); %#ok<UNRCH> 
+    [X_known_xlsx, X_unknown_xlsx, targets] = bin_feat_from_files();
     
-        % Relevant data
-        NT = all_data{i,2}{:}(27:50);
-        AA = nt2aa(all_data{i,2}{:}(27:50));
-        
-        % Task 3 - more features!
+    X_known   = cat(2, X_known_xlsx, X_known_our);
+    X_unknown = cat(2, X_unknown_xlsx, X_unknown_our);
     
-        % Amino Acid based features
-        features(i,1) = length(strfind(AA,'A')); % Alanine
-        features(i,2) = length(strfind(AA,'R')); % Arganine
-        features(i,3) = length(strfind(AA,'N')); % Asparagine
-        features(i,4) = length(strfind(AA,'D')); % Asparatate
-        features(i,5) = length(strfind(AA,'C')); % Cysteine
-        features(i,6) = length(strfind(AA,'Q')); % Glutamine
-        features(i,7) = length(strfind(AA,'E')); % Glutamate
-        features(i,8) = length(strfind(AA,'G')); % Glycine
-        features(i,9) = length(strfind(AA,'H')); % Histidine
-        features(i,10) = length(strfind(AA,'I')); % Isoleucine
-        features(i,11) = length(strfind(AA,'L')); % Leucine
-        features(i,12) = length(strfind(AA,'K')); % Lysine
-        features(i,13) = length(strfind(AA,'M')); % Methionine
-        features(i,14) = length(strfind(AA,'F')); % Phenylalanine
-        features(i,15) = length(strfind(AA,'P')); % Proline
-        features(i,16) = length(strfind(AA,'S')); % Serine
-        features(i,17) = length(strfind(AA,'T')); % Threonine
-        features(i,18) = length(strfind(AA,'W')); % Tryptophan
-        features(i,19) = length(strfind(AA,'Y')); % Tyrosine
-        features(i,20) = length(strfind(AA,'V')); % Valine
-        features(i,21) = length(strfind(AA,'*')); % Stop codon
-        features(i,22) = features(i,2)+features(i,9)+features(i,12)+features(i,4)+...
-          features(i,7);                        % Electricaly Charged side chains
-        features(i,23) = features(i,16)+features(i,17)+features(i,3)+features(i,7)+...
-          features(i,6);                        % Polar Uncharged side chains
-        features(i,24) = features(i,1)+features(i,20)+features(i,10)+features(i,11)+...
-          features(i,13)+features(i,14)+features(i,19)+features(i,18);
-                                                % Hydrophobic side chains
-        features(i,25) = features(i,5)+features(i,8)+features(i,15);
-                                                % Special cases
-        % DNA based features
-        [pal_pos,pal_length] = palindromes(NT);
-        if ~isempty(pal_pos)
-            features(i,26) = length(pal_pos);       % Number of palindromes in sequence 
-            features(i,27) = max(pal_length);       % Longest palindrome in sequence
-        else
-            features(i,26) = 0;       % Number of palindromes in sequence
-            features(i,27) = 0;       % Longest palindrome in sequence
-        end
-        features(i,28) = length(strfind(NT,'TATA')); % TATA is in Eukaryotes so maybe no...
-        features(i,29) = length(strfind(NT,'CAT'));  % Saw in wikipedia, idk...
-        features(i,30) = length(strfind(NT,'A'))+length(strfind(NT,'G')); % No. of Purines
-        features(i,31) = length(strfind(NT,'C'))+length(strfind(NT,'T')); % No. of Pyrimidines
-    
-        % Task 1 - AAA,TTT, GCA
-        features(i,32) = length(strfind(NT,'AAA'));
-        features(i,33) = length(strfind(NT,'TTT'));
-        features(i,34) = length(strfind(NT,'GCA'));
-    
-        % Task 2 - Folding energy
-    %     features(i,35) = FE window 1
-    %     features(i,36) = FE window 2
-    %     features(i,37) = FE window 3
-    
-   
+    % quick sanity check
+    if targets_1 ~= targets
+        disp('oh no this is bad! there is a miss match between the two target vectors...');
     end
-    save('features.mat','features');   % Save created features
 else
-    load('features.mat');              % Load created features
-end
-%% Convert to bin based features
-if convert_flag == 1
-    [known_bin_idx_sorted, X_known, Y, unknown_bin_idx_sorted,...  % Converting created features
-    X_unknown] =  bin_feat(features);                              % into bin based features
-    
-    
-
-    save('bin_convertion.mat','X_known','Y',...
-    'X_unknown','known_bin_idx_sorted','unknown_bin_idx_sorted');  % Save created parameters
-
-else
-    load('bin_convertion.mat'); % Load created parameters
+    [X_known, X_unknown, targets] = bin_feat_from_files();
 end
 
-%% Correlation
 
-
-figure;
-heatmap(abs(corr(X_known,type = 'Spearman')))
-
-figure;
-heatmap(abs(corr(X_known,Y,type = 'Spearman')))
+%% Correlation tests and feature rejection
+feat_feat_corr = abs(corr(X_known,type = 'Spearman'));
+feat_target_corr = abs(corr(X_known,targets,type = 'Spearman'));
+% insert here the corr analysis function!
 
 %% Feature selection
-if feat_selection_flag == 1
-    % Before removing features- consider feature-feature and feature label
-    % correlation.
-    corr_remove = [1:27]; % features indices to remove due to coorelation analysis
-    X_known(:,corr_remove) = [];
-    X_unknown(:,corr_remove) = [];
+if feat_selection  
+    idx = randperm(length(targets), length(targets)*0.5); %#ok<UNRCH> % use 50% from the data to select features (prevent overfiting)
+    % remove more features via SFS or filter methods.
+    options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
+    fun = @(Xtrain,Ytrain,Xtest,Ytest) loss(fitrsvm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
+    [idx_sfs, history_sfs] = sequentialfs(fun, X_known(idx,:), targets(idx), 'options', options); 
     
-%     % remove more features via SFS or filter methods.
-%     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
-%     fun = @(Xtrain,Ytrain,Xtest,Ytest)loss(fitrensemble(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
-%     [idx_sfs, history_sfs] = sequentialfs(fun, X_known, Y, 'options', options); 
-%     
-%     sfs_remove = ~idx_sfs;
-%     X_known(:,sfs_remove) = [];
-%     X_unknown(:,sfs_remove) = [];
-%     
-%     figure;
-%     gplotmatrix(X_knwon, [], Y);  % gplot - look at the features!
+    sfs_remove = ~idx_sfs;
+    X_known(:,sfs_remove) = [];
+    X_unknown(:,sfs_remove) = [];
     
-    save('feat_selection.mat','corr_remove','X_known','X_unknown'); % add 'sfs_remove' is sfsing
-else
-    load('feat_selection.mat');
+    figure;
+    gplotmatrix(X_known, [], targets);  % gplot - look at the features!
 end
-%% Prediction and analysis on Validation set
-if eval_flag == 1
 
-    % Create test and training/validation sets
-    indices=cvpartition(Y,'holdout',0.2);
-    training_indices = training(indices);
-    test_indices = ~training_indices;
-    features_mid = X_known(training_indices,:);
-    labels_mid = Y(training_indices,:); 
-    features_test = X_known(test_indices,:);
-    labels_test =Y(test_indices,:); 
-    
-    % Creat training and validation sets
-    indices=cvpartition(labels_mid,'holdout',0.3);
-    training_indices = training(indices);
-    validation_indices = ~training_indices;
-    features_training = features_mid(training_indices,:);
-    labels_training = labels_mid(training_indices,:); 
-    features_validation = features_mid(validation_indices,:);
-    labels_validation =labels_mid(validation_indices,:);
-    
-    % Task 4 - Create model on training set
-    linear_model = fitlm(features_training,labels_training);      % Simple linear regression
-    neural_model = fitrnet(features_training,labels_training);    % Neural Network regression
-    tree_model = fitrensemble(features_training,labels_training); % Trees ensemble regression
-    
-    % Predict on validation set and on training set itself
-    % On validation
-    linear_predict_val = predict(linear_model, features_validation);
-    neural_predict_val = predict(neural_model, features_validation);
-    tree_predict_val = predict(tree_model, features_validation);
-    
-    % On training 
-    linear_predict_train = predict(linear_model, features_training);
-    neural_predict_train = predict(neural_model, features_training);
-    tree_predict_train = predict(tree_model, features_training);
-    
-    % Task 5 - Correlation of training vs validation;
-    
-    Validation_corr = [abs(corr(labels_validation,linear_predict_val,type = 'Spearman')),...
-        abs(corr(labels_validation,neural_predict_val,type = 'Spearman')),...
-        abs(corr(labels_validation,tree_predict_val,type = 'Spearman'))];
-    
-    Training_corr = [abs(corr(labels_training,linear_predict_train,type = 'Spearman')),...
-        abs(corr(labels_training,neural_predict_train,type = 'Spearman')),...
-        abs(corr(labels_training,tree_predict_train,type = 'Spearman'))];
+%% Prediction and analysis using a 10-fold cross validation
+C_2 = cvpartition(length(targets), 'KFold', 10); % cvpartition object - creating a 10-fold partition
 
-figure;
-subplot(2,1,1);
-plot(1:224,labels_training);
-hold on;
-plot(1:224,tree_predict_train);
-hold off
-subplot(2,1,2);
-plot(1:95,labels_validation);
-hold on;
-plot(1:95,tree_predict_val);
-hold off
-end
-%% Prediction and analysis on Test set
-if test_flag == 1
-    % Create model using the whole training set(training+validation)
-    Best_model = fitlm(features_mid,labels_mid); 
-    
-    % Task 5 - Predict on test set
-    predict_test = predict(Best_model, features_test);
+% train a model - important to add catagorical features indices (if there are any) when training the model 
+linear_model = fitrlinear(X_known,  targets, "CVPartition", C_2, "Learner", "leastsquares"); % Simple linear regression
+svm_model    = fitrsvm(X_known,     targets, "CVPartition", C_2, "KernelFunction","linear"); % SVM regression
+neural_model = fitrnet(X_known,     targets, 'CVPartition', C_2); % Neural Network regression
+tree_model   = fitrensemble(X_known,targets, "CVPartition", C_2);  % regression ensemble Tree
 
-figure;
-plot(1:79,labels_test);
-hold on;
-plot(1:79,predict_test);
-hold off
-end
+% predict targets using the partitioned models
+Y_linear = kfoldPredict(linear_model);
+Y_svm    = kfoldPredict(svm_model);
+Y_NN     = kfoldPredict(neural_model);
+Y_tree   = kfoldPredict(tree_model);
+
+% compute correlation between prediction and targets - dont use abs cause
+% we are also interest in a positive correlation!
+correlations = [
+    corr(targets, Y_linear, type = 'Spearman')
+    corr(targets, Y_svm,    type = 'Spearman')
+    corr(targets, Y_NN,     type = 'Spearman')
+    corr(targets, Y_tree,   type = 'Spearman')];
+
+% visualization
+figure('Name', 'regression plot')
+plot(targets); hold all; 
+plot(Y_linear); % linear model
+plot(Y_svm); % svm model
+plot(Y_NN); % NN model
+plot(Y_tree); % tree model
+title('model comparison'); legend({'targets', 'linear predictions', 'svm predictions', 'NN predictions', 'tree predictions' });
+
+%% train a model on the entire data
+% train a model - important to add catagorical features indices (if there are any) when training the model 
+final_linear_model = fitrlinear(X_known,   targets, "Learner", "leastsquares"); % Simple linear regression
+final_svm_model    = fitrsvm(X_known,      targets); % SVM regression
+final_NN_model     = fitrnet(X_known,      targets); % Neural Network regression
+final_tree_model   = fitrensemble(X_known, targets);  % regression Tree
+
 %% Prediction on Unknown Data
-if finito_flag == 1
-    % Create model using the whole known set
-    Final_model = fitlm(X_knwon,Y); 
-    
-    % Predict on unknown set
-    predict_test = predict(Final_model, X_unknown);
-
+if finito_flag
+    predict_test_linear = predict(final_linear_model, X_unknown);
+    predict_test_svm    = predict(final_svm_model,    X_unknown);
+    predict_test_NN     = predict(final_NN_model,     X_unknown);
+    predict_test_tree   = predict(final_tree_model,   X_unknown);
 end
+
+
+%% lets see how close we are on the unknown (thank you data leaks :))
+% define the paths for the xlsx files and load the data from them
+known_path = 'known_data_set.xlsx';
+unknown_path = 'unknown_data_set.xlsx';
+
+known = sortrows(readtable(known_path, "VariableNamingRule", "preserve"), 'Bin index') ;
+unknown = sortrows(readtable(unknown_path, "VariableNamingRule", "preserve"), 'Bin index');
+
+% extract the bin numbers
+known_bin_idx = known(:,1).Variables;     
+unknown_bin_idx = unknown(:,1).Variables;
+
+[sorted, I] = sort([known_bin_idx ;unknown_bin_idx]);
+t = [targets ;predict_test_svm];
+
+plot(sorted, t(I));
