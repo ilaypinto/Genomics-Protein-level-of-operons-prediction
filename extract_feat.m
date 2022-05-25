@@ -56,6 +56,10 @@ function features = extract_feat(data)
         features(i,29) = length(strfind(NT,'CAT'));  % Saw in wikipedia, idk...
         features(i,30) = length(strfind(NT,'A'))+length(strfind(NT,'G')); % No. of Purines
         features(i,31) = length(strfind(NT,'C'))+length(strfind(NT,'T')); % No. of Pyrimidines
+        features(i,52) = length(strfind(NT,'UAAUG'));                     % Sequence from paper
+        features(i,53) = length(strfind(NT,'UGAUG'));                     % Sequence from paper
+        features(i,54) = length(strfind(NT,'UAGUG'));                     % Sequence from paper
+        features(i,55) = length(strfind(NT,'UAGA'));                      % Sequence from paper
     
         % Task 1 - AAA,TTT, GCA
         features(i,32) = length(strfind(NT,'AAA'));
@@ -63,11 +67,12 @@ function features = extract_feat(data)
         features(i,34) = length(strfind(NT,'GCA'));
     
         features(i,35) = rnafold(NT);
+        
         for j = 1:length(couples)
             features(i,35+j) = length(strfind(NT,couples(1,j)));
         end
         
-        % next feature is no 52 (35+16 couples)
+        
         
     end
 end
