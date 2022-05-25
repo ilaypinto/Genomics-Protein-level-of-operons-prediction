@@ -10,7 +10,7 @@ val_flag = 1;            % 1 - Prediction and analysis on Validation set flag
 test_flag = 1;           % 1 - Prediction and analysis on Test set flag
 finito_flag = 1;         % 1 - Prediction on Unknown Data flag
 use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
-extract_feat = 1;        % 1 - extract features from raw data, 0 - load features mat
+extract_feat_flag = 1;        % 1 - extract features from raw data, 0 - load features mat
 
 % Useful Parameters
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
@@ -20,7 +20,7 @@ extract_feat = 1;        % 1 - extract features from raw data, 0 - load features
 all_data  = readtable('Variants_sequence.xlsx', 'VariableNamingRule', 'preserve');   % Load all sequences
 
 %% Features Creation
-if extract_feat 
+if extract_feat_flag 
     features = extract_feat(all_data);
     save('features.mat', "features");
 else 
