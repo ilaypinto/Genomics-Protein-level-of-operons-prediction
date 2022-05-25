@@ -1,6 +1,8 @@
 function features = extract_feat(data)
     % preallocate memory
-    features = zeros(size(data,1),34);
+    features = zeros(size(data,1),51);
+    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
+    "TG","TC","TA"];             % All couple nucleotides options
 
     for i = 1:size(data,1)
     
@@ -60,11 +62,12 @@ function features = extract_feat(data)
         features(i,33) = length(strfind(NT,'TTT'));
         features(i,34) = length(strfind(NT,'GCA'));
     
-        % Task 2 - Folding energy
-    %     features(i,35) = FE window 1
-    %     features(i,36) = FE window 2
-    %     features(i,37) = FE window 3
-    
-   
+        features(i,35) = rnafold(NT);
+        for j = 1:length(couples)
+            features(i,35+j) = length(strfind(NT,couples(1,j)));
+        end
+        
+        % next feature is no 52 (35+16 couples)
+        
     end
 end
