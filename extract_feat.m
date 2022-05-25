@@ -1,6 +1,6 @@
 function features = extract_feat(data)
     % preallocate memory
-    features = zeros(size(data,1),51);
+    features = zeros(size(data,1),55);
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
     "TG","TC","TA"];             % All couple nucleotides options
 
