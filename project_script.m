@@ -5,11 +5,12 @@ clear all; clc; close all;
 %% Flags
 % add flags as you please for efficiant work
 create_bins = 1;         % 1 - Convert to bin based features, 0 - dont convert into bin based features
-feat_selection = 0;      % 1 - apply feature selection process, 0 - dont aplly feature selection
+feat_selection = 1;      % 1 - apply feature selection process, 0 - dont aplly feature selection
 val_flag = 1;            % 1 - Prediction and analysis on Validation set flag
 test_flag = 1;           % 1 - Prediction and analysis on Test set flag
 finito_flag = 1;         % 1 - Prediction on Unknown Data flag
 use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
+extract_feat = 1;        % 1 - extract features from raw data, 0 - load features mat
 
 % Useful Parameters
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
@@ -19,7 +20,13 @@ use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
 all_data  = readtable('Variants_sequence.xlsx', 'VariableNamingRule', 'preserve');   % Load all sequences
 
 %% Features Creation
-features = extract_feat(all_data);
+if extract_feat 
+    features = extract_feat(all_data);
+    save('features.mat', "features");
+else 
+    features = load('features.mat');
+    features = features.features;
+end
 
 
 %% Convert to bin based features (mean of features from sequences in the bin)
@@ -45,20 +52,26 @@ feat_target_corr = abs(corr(X_known,targets,type = 'Spearman'));
 % insert here the corr analysis function!
 
 %% Feature selection
+X_known = rand(300,30); targets = rand(300,1);
 if feat_selection  
     idx = randperm(length(targets), length(targets)*0.5); % use 50% from the data to select features (prevent overfiting)
     % remove more features via SFS or filter methods.
     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
-    fun = @(Xtrain,Ytrain,Xtest,Ytest) loss(fitrsvm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
+    fun = @(Xtrain,Ytrain,Xtest,Ytest) sfs_corr(Xtrain,Ytrain,Xtest,Ytest);  % sfs under correlation of linear regression predictions with targets
     [idx_sfs, history_sfs] = sequentialfs(fun, X_known(idx,:), targets(idx), 'options', options); 
-    
-    sfs_remove = ~idx_sfs;
-    X_known(:,sfs_remove) = [];
-    X_unknown(:,sfs_remove) = [];
-    
-    figure;
-    gplotmatrix(X_known, [], targets);  % gplot - look at the features!
+   
+    save('idx_sfs.mat', 'idx_sfs');
+else
+    idx_sfs = load('idx_sfs.mat');
+    idx_sfs = idx_sfs.idx_sfs;
 end
+
+X_known(:,~idx_sfs) = [];
+X_unknown(:,~idx_sfs) = [];
+
+% figure;
+% gplotmatrix(X_known, [], targets);  % gplot - look at the features!
+
 
 %% Prediction and analysis using a 10-fold cross validation
 C_2 = cvpartition(length(targets), 'KFold', 10); % cvpartition object - creating a 10-fold partition
@@ -110,17 +123,19 @@ end
 
 %% lets see how close we are on the unknown (thank you data leaks :))
 % define the paths for the xlsx files and load the data from them
-known_path = 'known_data_set.xlsx';
-unknown_path = 'unknown_data_set.xlsx';
+% known_path = 'known_data_set.xlsx';
+% unknown_path = 'unknown_data_set.xlsx';
+% 
+% known = sortrows(readtable(known_path, "VariableNamingRule", "preserve"), 'Bin index') ;
+% unknown = sortrows(readtable(unknown_path, "VariableNamingRule", "preserve"), 'Bin index');
+% 
+% % extract the bin numbers
+% known_bin_idx = known(:,1).Variables;     
+% unknown_bin_idx = unknown(:,1).Variables;
+% 
+% [sorted, I] = sort([known_bin_idx ;unknown_bin_idx]);
+% t = [targets ;predict_test_svm];
+% 
+% plot(sorted, t(I));
 
-known = sortrows(readtable(known_path, "VariableNamingRule", "preserve"), 'Bin index') ;
-unknown = sortrows(readtable(unknown_path, "VariableNamingRule", "preserve"), 'Bin index');
-
-% extract the bin numbers
-known_bin_idx = known(:,1).Variables;     
-unknown_bin_idx = unknown(:,1).Variables;
-
-[sorted, I] = sort([known_bin_idx ;unknown_bin_idx]);
-t = [targets ;predict_test_svm];
-
-plot(sorted, t(I));
+% C:\Users\tomer\Documents\ViennaRNA-2.5.0

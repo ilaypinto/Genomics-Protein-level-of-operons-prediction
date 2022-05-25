@@ -1,14 +1,15 @@
 function features = extract_feat(data)
     % preallocate memory
-    features = zeros(size(data,1),55);
+    features = zeros(size(data,1),98);
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
     "TG","TC","TA"];             % All couple nucleotides options
-
+    f = waitbar(0, ['pls wait! ' num2str(0) ' out of ' num2str(size(data,1))]);
     for i = 1:size(data,1)
-    
+        waitbar(i/size(data,1), f, ['pls wait! ' num2str(i) ' out of ' num2str(size(data,1))]); % update the wait bar
+
         % Relevant data
-        NT = data{i,2}{:}(27:50);
-        AA = nt2aa(data{i,2}{:}(27:50));
+        NT = data{i,2}{:};
+        AA = nt2aa(NT);
         
         % Task 3 - more features!
     
@@ -56,23 +57,28 @@ function features = extract_feat(data)
         features(i,29) = length(strfind(NT,'CAT'));  % Saw in wikipedia, idk...
         features(i,30) = length(strfind(NT,'A'))+length(strfind(NT,'G')); % No. of Purines
         features(i,31) = length(strfind(NT,'C'))+length(strfind(NT,'T')); % No. of Pyrimidines
-        features(i,52) = length(strfind(NT,'UAAUG'));                     % Sequence from paper
-        features(i,53) = length(strfind(NT,'UGAUG'));                     % Sequence from paper
-        features(i,54) = length(strfind(NT,'UAGUG'));                     % Sequence from paper
-        features(i,55) = length(strfind(NT,'UAGA'));                      % Sequence from paper
+        features(i,32) = length(strfind(NT,'TAATG'));                     % Sequence from paper
+        features(i,33) = length(strfind(NT,'TGATG'));                     % Sequence from paper
+        features(i,34) = length(strfind(NT,'TAGTG'));                     % Sequence from paper
+        features(i,35) = length(strfind(NT,'TAGA'));                      % Sequence from paper
     
         % Task 1 - AAA,TTT, GCA
-        features(i,32) = length(strfind(NT,'AAA'));
-        features(i,33) = length(strfind(NT,'TTT'));
-        features(i,34) = length(strfind(NT,'GCA'));
+        features(i,36) = length(strfind(NT,'AAA'));
+        features(i,37) = length(strfind(NT,'TTT'));
+        features(i,38) = length(strfind(NT,'GCA'));
     
-        features(i,35) = rnafold(NT);
+        [~,features(i,39)] = rnafold(NT);
         
         for j = 1:length(couples)
-            features(i,35+j) = length(strfind(NT,couples(1,j)));
+            features(i,39+j) = length(strfind(NT,couples(1,j)));
         end
-        
-        
-        
+
+        win_size = 30;
+        for j = 1:(length(NT) - win_size)
+            system(['echo "' NT(j:j+win_size) '" >> C:\Users\tomer\Documents\Fold\sequences']);
+        end
+        [~,features(i,56:end)] = system(['C:\Users\tomer\Documents\Fold\RNAfold < C:\Users\tomer\Documents\Foldsequences']);
+        delete 'C:\Users\tomer\Documents\Fold\sequences'
     end
+    delete(f)
 end
