@@ -1,4 +1,5 @@
 %% Main Script - Challenge %%
+%#ok<*UNRCH> 
 clear all; clc; close all;
 
 %% Flags
@@ -23,18 +24,18 @@ features = extract_feat(all_data);
 
 %% Convert to bin based features (mean of features from sequences in the bin)
 if use_all_feat
-    [X_known_our, targets_1, X_unknown_our] =  bin_feat(features); %#ok<UNRCH> 
+    [X_known_our, targets_1, X_unknown_our] =  bin_feat(features);  
     [X_known_xlsx, X_unknown_xlsx, targets] = bin_feat_from_files();
     
     X_known   = cat(2, X_known_xlsx, X_known_our);
     X_unknown = cat(2, X_unknown_xlsx, X_unknown_our);
-    
-    % quick sanity check
+
+% quick sanity check
     if targets_1 ~= targets
         disp('oh no this is bad! there is a miss match between the two target vectors...');
     end
 else
-    [X_known, X_unknown, targets] = bin_feat_from_files();
+    [X_known, X_unknown, targets] = bin_feat_from_files(); 
 end
 
 
@@ -45,7 +46,7 @@ feat_target_corr = abs(corr(X_known,targets,type = 'Spearman'));
 
 %% Feature selection
 if feat_selection  
-    idx = randperm(length(targets), length(targets)*0.5); %#ok<UNRCH> % use 50% from the data to select features (prevent overfiting)
+    idx = randperm(length(targets), length(targets)*0.5); % use 50% from the data to select features (prevent overfiting)
     % remove more features via SFS or filter methods.
     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
     fun = @(Xtrain,Ytrain,Xtest,Ytest) loss(fitrsvm(Xtrain, Ytrain), Xtest, Ytest);  % sfs under loss of linear regression
@@ -96,7 +97,7 @@ title('model comparison'); legend({'targets', 'linear predictions', 'svm predict
 final_linear_model = fitrlinear(X_known,   targets, "Learner", "leastsquares"); % Simple linear regression
 final_svm_model    = fitrsvm(X_known,      targets); % SVM regression
 final_NN_model     = fitrnet(X_known,      targets); % Neural Network regression
-final_tree_model   = fitrensemble(X_known, targets);  % regression Tree
+final_tree_model   = fitrensemble(X_known, targets); % regression Tree
 
 %% Prediction on Unknown Data
 if finito_flag
