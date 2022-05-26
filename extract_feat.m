@@ -1,18 +1,19 @@
 function features = extract_feat(data)
+% this function does feature engineering on the raw data set and returns a
+% matrix in which every column is a feature
+
     % preallocate memory
-    features = zeros(size(data,1),95);
-    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
-    "TG","TC","TA"];             % All couple nucleotides options
-    f = waitbar(0, ['pls wait! ' num2str(0) ' out of ' num2str(size(data,1))]);
+    features = zeros(size(data,1),92);
+    % All couple nucleotides options
+    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT","TG","TC","TA"];             
+    f = waitbar(0, ['pls wait! ' num2str(0) ' out of ' num2str(size(data,1))]); % initialize a wait bar
     for i = 1:size(data,1)
         waitbar(i/size(data,1), f, ['pls wait! ' num2str(i) ' out of ' num2str(size(data,1))]); % update the wait bar
 
         % Relevant data
         NT = data{i,2}{:};
         AA = nt2aa(NT);
-        
-        % Task 3 - more features!
-    
+            
         % Amino Acid based features
         features(i,1) = length(strfind(AA,'A')); % Alanine
         features(i,2) = length(strfind(AA,'R')); % Arganine
@@ -35,20 +36,16 @@ function features = extract_feat(data)
         features(i,19) = length(strfind(AA,'Y')); % Tyrosine
         features(i,20) = length(strfind(AA,'V')); % Valine
         features(i,21) = length(strfind(AA,'*')); % Stop codon
-        features(i,22) = features(i,2)+features(i,9)+features(i,12)+features(i,4)+...
-          features(i,7);                        % Electricaly Charged side chains
-        features(i,23) = features(i,16)+features(i,17)+features(i,3)+features(i,7)+...
-          features(i,6);                        % Polar Uncharged side chains
-        features(i,24) = features(i,1)+features(i,20)+features(i,10)+features(i,11)+...
-          features(i,13)+features(i,14)+features(i,19)+features(i,18);
-                                                % Hydrophobic side chains
-        features(i,25) = features(i,5)+features(i,8)+features(i,15);
-                                                % Special cases
+        features(i,22) = features(i,2)+features(i,9)+features(i,12)+features(i,4)+features(i,7); % Electricaly Charged side chains
+        features(i,23) = features(i,16)+features(i,17)+features(i,3)+features(i,7)+features(i,6); % Polar Uncharged side chains
+        features(i,24) = features(i,1)+features(i,20)+features(i,10)+features(i,11)+features(i,13)+features(i,14)+features(i,19)+features(i,18); % Hydrophobic side chains
+        features(i,25) = features(i,5)+features(i,8)+features(i,15); % Special cases
+
         % DNA based features
         [pal_pos,pal_length] = palindromes(NT);
         if ~isempty(pal_pos)
-            features(i,26) = length(pal_pos);       % Number of palindromes in sequence 
-            features(i,27) = max(pal_length);       % Longest palindrome in sequence
+            features(i,26) = length(pal_pos);   % Number of palindromes in sequence 
+            features(i,27) = max(pal_length);   % Longest palindrome in sequence
         else
             features(i,26) = 0;       % Number of palindromes in sequence
             features(i,27) = 0;       % Longest palindrome in sequence
@@ -62,21 +59,18 @@ function features = extract_feat(data)
         features(i,34) = length(strfind(NT,'TAGTG'));                     % Sequence from paper
         features(i,35) = length(strfind(NT,'TAGA'));                      % Sequence from paper
     
-        % Task 1 - AAA,TTT, GCA
-        features(i,36) = length(strfind(NT,'AAA'));
-        features(i,37) = length(strfind(NT,'TTT'));
-        features(i,38) = length(strfind(NT,'GCA'));
-    
-        [~,features(i,39)] = rnafold(NT);
+        [~,features(i,36)] = rnafold(NT); % folding energy of entire rna
         
         for j = 1:length(couples)
-            features(i,39+j) = length(strfind(NT,couples(1,j)));
+            features(i,36+j) = length(strfind(NT,couples(1,j)));
         end
 
         win_size = 30;
+        % we are not ussing the RNAfold provided in the pdf cause its too
+        % slow...
         for j = 1:(length(NT) - win_size)
 %             system(['echo "' NT(j:j+win_size) '" >> C:\Users\tomer\Documents\Fold\sequences']);
-            [~,features(i,55 + j)] = rnafold(NT(j:j+win_size));
+            [~,features(i,52 + j)] = rnafold(NT(j:j+win_size)); % compute the folding energy of every window
         end
 %         [~,features(i,56:end)] = system(['C:\Users\tomer\Documents\Fold\RNAfold < C:\Users\tomer\Documents\Fold\sequences']);
 %         delete 'C:\Users\tomer\Documents\Fold\sequences'

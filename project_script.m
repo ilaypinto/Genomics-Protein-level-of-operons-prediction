@@ -10,11 +10,7 @@ val_flag = 1;            % 1 - Prediction and analysis on Validation set flag
 test_flag = 1;           % 1 - Prediction and analysis on Test set flag
 finito_flag = 1;         % 1 - Prediction on Unknown Data flag
 use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
-make_feat = 0;        % 1 - extract features from raw data, 0 - load features mat
-
-% Useful Parameters
-    couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
-        "TG","TC","TA"];  % Maybe use this?
+make_feat = 0;           % 1 - extract features from raw data, 0 - load features mat
 
 % Load Data
 all_data  = readtable('Variants_sequence.xlsx', 'VariableNamingRule', 'preserve');   % Load all sequences
@@ -45,12 +41,6 @@ else
     [X_known, X_unknown, targets] = bin_feat_from_files(); 
 end
 
-
-%% Correlation tests and feature rejection
-feat_feat_corr = abs(corr(X_known,type = 'Spearman'));
-feat_target_corr = abs(corr(X_known,targets,type = 'Spearman'));
-% insert here the corr analysis function!
-
 %% Feature selection
 if feat_selection  
     idx = randperm(length(targets), round(length(targets)*0.8)); % use 80% from the data to select features (try to prevent overfiting)
@@ -67,10 +57,6 @@ end
 
 X_known(:,~idx_sfs) = [];
 X_unknown(:,~idx_sfs) = [];
-
-% figure;
-% gplotmatrix(X_known, [], targets);  % gplot - look at the features!
-
 
 %% Prediction and analysis using a 10-fold cross validation
 C_2 = cvpartition(length(targets), 'KFold', 10); % cvpartition object - creating a 10-fold partition
@@ -118,23 +104,5 @@ if finito_flag
     predict_test_NN     = predict(final_NN_model,     X_unknown);
     predict_test_tree   = predict(final_tree_model,   X_unknown);
 end
-
-
-%% lets see how close we are on the unknown (thank you data leaks :))
-% define the paths for the xlsx files and load the data from them
-% known_path = 'known_data_set.xlsx';
-% unknown_path = 'unknown_data_set.xlsx';
-% 
-% known = sortrows(readtable(known_path, "VariableNamingRule", "preserve"), 'Bin index') ;
-% unknown = sortrows(readtable(unknown_path, "VariableNamingRule", "preserve"), 'Bin index');
-% 
-% % extract the bin numbers
-% known_bin_idx = known(:,1).Variables;     
-% unknown_bin_idx = unknown(:,1).Variables;
-% 
-% [sorted, I] = sort([known_bin_idx ;unknown_bin_idx]);
-% t = [targets ;predict_test_svm];
-% 
-% plot(sorted, t(I));
-
-% C:\Users\tomer\Documents\ViennaRNA-2.5.0
+% save the svm predictions for later use
+save('predictions.mat', 'predict_test_svm');
