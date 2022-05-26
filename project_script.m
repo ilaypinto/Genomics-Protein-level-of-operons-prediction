@@ -5,12 +5,12 @@ clear all; clc; close all;
 %% Flags
 % add flags as you please for efficiant work
 create_bins = 1;         % 1 - Convert to bin based features, 0 - dont convert into bin based features
-feat_selection = 1;      % 1 - apply feature selection process, 0 - dont aplly feature selection
+feat_selection = 0;      % 1 - apply feature selection process, 0 - dont aplly feature selection
 val_flag = 1;            % 1 - Prediction and analysis on Validation set flag
 test_flag = 1;           % 1 - Prediction and analysis on Test set flag
 finito_flag = 1;         % 1 - Prediction on Unknown Data flag
 use_all_feat = 1;        % 1 - use all features, 0 - use only features from xlsx
-extract_feat_flag = 1;        % 1 - extract features from raw data, 0 - load features mat
+make_feat = 0;        % 1 - extract features from raw data, 0 - load features mat
 
 % Useful Parameters
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
@@ -20,7 +20,7 @@ extract_feat_flag = 1;        % 1 - extract features from raw data, 0 - load fea
 all_data  = readtable('Variants_sequence.xlsx', 'VariableNamingRule', 'preserve');   % Load all sequences
 
 %% Features Creation
-if extract_feat_flag 
+if make_feat 
     features = extract_feat(all_data);
     save('features.mat', "features");
 else 
@@ -52,9 +52,8 @@ feat_target_corr = abs(corr(X_known,targets,type = 'Spearman'));
 % insert here the corr analysis function!
 
 %% Feature selection
-X_known = rand(300,30); targets = rand(300,1);
 if feat_selection  
-    idx = randperm(length(targets), length(targets)*0.5); % use 50% from the data to select features (prevent overfiting)
+    idx = randperm(length(targets), round(length(targets)*0.8)); % use 80% from the data to select features (try to prevent overfiting)
     % remove more features via SFS or filter methods.
     options = statset('Display', 'iter', 'UseParallel', true);  % UseParallel to speed up the computations and Display so we can see the progress
     fun = @(Xtrain,Ytrain,Xtest,Ytest) sfs_corr(Xtrain,Ytrain,Xtest,Ytest);  % sfs under correlation of linear regression predictions with targets
