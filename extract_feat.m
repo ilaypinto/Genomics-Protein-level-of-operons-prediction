@@ -1,6 +1,6 @@
 function features = extract_feat(data)
     % preallocate memory
-    features = zeros(size(data,1),98);
+    features = zeros(size(data,1),95);
     couples = ["GG","GC","GA","GT","CC","CG","CA","CT","AA","AG","AC","AT","TT",...
     "TG","TC","TA"];             % All couple nucleotides options
     f = waitbar(0, ['pls wait! ' num2str(0) ' out of ' num2str(size(data,1))]);
@@ -75,10 +75,11 @@ function features = extract_feat(data)
 
         win_size = 30;
         for j = 1:(length(NT) - win_size)
-            system(['echo "' NT(j:j+win_size) '" >> C:\Users\tomer\Documents\Fold\sequences']);
+%             system(['echo "' NT(j:j+win_size) '" >> C:\Users\tomer\Documents\Fold\sequences']);
+            [~,features(i,55 + j)] = rnafold(NT(j:j+win_size));
         end
-        [~,features(i,56:end)] = system(['C:\Users\tomer\Documents\Fold\RNAfold < C:\Users\tomer\Documents\Foldsequences']);
-        delete 'C:\Users\tomer\Documents\Fold\sequences'
+%         [~,features(i,56:end)] = system(['C:\Users\tomer\Documents\Fold\RNAfold < C:\Users\tomer\Documents\Fold\sequences']);
+%         delete 'C:\Users\tomer\Documents\Fold\sequences'
     end
     delete(f)
 end
